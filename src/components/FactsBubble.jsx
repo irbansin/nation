@@ -6,22 +6,39 @@ export default function FactsBubble({
   factLoading,
   factText,
   factStats,
+  factSource,
   bubbleStyle,
   toggleFactsBubble,
   handleAnimationEnd,
+  isAiReady,
+  isAiLoading,
+  aiProgress,
 }) {
   if (activeState !== "flag-presenter") return null;
 
   return (
     <>
       <div className="facts-fab-container">
-        <button
-          className={`facts-fab ${isBubbleOpen ? "active" : ""}`}
-          onClick={toggleFactsBubble}
-          title="Reveal Country Facts"
-        >
-          <span className="fab-icon">💡</span>
-        </button>
+        {isAiLoading && (
+          <div className="ai-loading-badge">
+            <div className="mini-pulse"></div>
+            <span>Loading intelligence... {aiProgress}%</span>
+          </div>
+        )}
+        {isAiReady && (
+          <button
+            className={`facts-fab ${isBubbleOpen ? "active" : ""} ${factLoading ? "generating" : ""}`}
+            onClick={toggleFactsBubble}
+            title="Reveal Country Facts"
+            disabled={factLoading}
+          >
+            {factLoading ? (
+              <span className="generating-text">Generating...</span>
+            ) : (
+              <span className="fab-icon">💡</span>
+            )}
+          </button>
+        )}
       </div>
 
       <div
@@ -65,7 +82,7 @@ export default function FactsBubble({
               </p>
 
               <p className="bubble-source">
-                Source: Live Wikipedia search queries & REST Countries API
+                Source: {factSource}
               </p>
             </>
           )}

@@ -23,6 +23,7 @@ export async function GET(request) {
 
   let finalFact = "";
   let stats = null;
+  let source = "";
 
   // 1. Primary: Wikipedia Search API (highly reliable, no rate limits/captchas, dynamic queries)
   try {
@@ -59,12 +60,13 @@ export async function GET(request) {
         if (clean.length > 15) {
           // Capitalize first letter
           clean = clean.charAt(0).toUpperCase() + clean.slice(1);
-          
+
           // Ensure it ends nicely
           if (!clean.endsWith(".") && !clean.endsWith("!") && !clean.endsWith("?")) {
             clean += "...";
           }
           finalFact = clean;
+          source = "Wikipedia Search API";
         }
       }
     }
@@ -127,6 +129,7 @@ export async function GET(request) {
 
           if (cleanedSnippets.length > 0) {
             finalFact = cleanedSnippets[Math.floor(Math.random() * cleanedSnippets.length)];
+            source = "DuckDuckGo Scraper";
           }
         }
       }
@@ -154,6 +157,7 @@ export async function GET(request) {
         } else {
           finalFact = extract;
         }
+        source = "Wikipedia Summary API";
       }
     } catch (wikiErr) {
       console.error("Last resort Wikipedia summary failed:", wikiErr);
@@ -163,6 +167,7 @@ export async function GET(request) {
   // Absolute fallback in case everything fails
   if (!finalFact) {
     finalFact = "This country has a unique story and rich cultural heritage waiting to be explored!";
+    source = "Static Fallback";
   }
 
   // 4. Fetch stats server-side (resolves client CORS issues)
@@ -176,8 +181,8 @@ export async function GET(request) {
       if (country) {
         const capital = country.capital ? country.capital[0] : "N/A";
         const population = country.population ? country.population.toLocaleString() : "N/A";
-        const currencies = country.currencies 
-          ? Object.values(country.currencies).map(c => `${c.name} (${c.symbol || ''})`).join(", ") 
+        const currencies = country.currencies
+          ? Object.values(country.currencies).map(c => `${c.name} (${c.symbol || ''})`).join(", ")
           : "N/A";
         const languages = country.languages ? Object.values(country.languages).join(", ") : "N/A";
         stats = { capital, population, currencies, languages };
@@ -187,5 +192,5 @@ export async function GET(request) {
     console.warn("Rest Countries API failed server-side:", restErr);
   }
 
-  return Response.json({ fact: finalFact, stats });
+  return Response.json({ fact: finalFact, stats, source });
 }

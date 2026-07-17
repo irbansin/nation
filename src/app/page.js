@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { SUPPORTED_COUNTRIES, LOCAL_TEMPLATES, MOCK_COUNTRY_NAMES } from "./constants";
+import { SUPPORTED_COUNTRIES, MOCK_COUNTRY_NAMES, DEFAULT_LLM_MODEL, DEFAULT_LLM_SIZE } from "./constants";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import FlagCard from "../components/FlagCard";
 import FactsBubble from "../components/FactsBubble";
 import PrModal from "../components/PrModal";
+import ModelStatus from "../components/ModelStatus";
 
 export default function Home() {
   const [statusText, setStatusText] = useState("Detecting your location...");
@@ -23,36 +24,70 @@ export default function Home() {
   const [factLoading, setFactLoading] = useState(false);
   const [factText, setFactText] = useState("");
   const [factStats, setFactStats] = useState(null);
+  const [factSource, setFactSource] = useState("");
   const [bubbleStyle, setBubbleStyle] = useState({});
+
+  // Local WebGPU LLM Engine States
+  const [engine, setEngine] = useState(null);
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [aiProgress, setAiProgress] = useState(0);
 
   const getMockCountryName = (code) => {
     return MOCK_COUNTRY_NAMES[code] || `Country (${code})`;
   };
 
-  // Star generation for USA flag
-  useEffect(() => {
-    if (activeState === "flag-presenter" && countryCode === "US") {
-      const canton = document.getElementById("usa-canton");
-      if (canton) {
-        canton.innerHTML = "";
-        for (let r = 0; r < 9; r++) {
-          const isEvenRow = r % 2 === 0;
-          const starCount = isEvenRow ? 6 : 5;
-          const rowDiv = document.createElement("div");
-          rowDiv.className = "star-row" + (isEvenRow ? '' : ' five-stars');
 
-          for (let s = 0; s < starCount; s++) {
-            rowDiv.innerHTML += `
-              <svg class="star-svg" viewBox="0 0 24 24">
-                <path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.4 8.168L12 18.896l-7.334 3.857 1.4-8.168L.132 9.21l8.2-1.192z"/>
-              </svg>
-            `;
-          }
-          canton.appendChild(rowDiv);
+  // Trigger background loading of local WebGPU model once presenter screen is active
+  useEffect(() => {
+    async function preinitAI() {
+      if (activeState === "flag-presenter" && !engine && !isAiLoading) {
+        setIsAiLoading(true);
+        setAiProgress(0);
+        try {
+          const webllm = await import("@mlc-ai/web-llm");
+          const initProgressCallback = (report) => {
+            setAiProgress(Math.round(report.progress * 100));
+          };
+          const coreEngine = await webllm.CreateMLCEngine(DEFAULT_LLM_MODEL, { initProgressCallback });
+          setEngine(coreEngine);
+        } catch (error) {
+          console.error("Failed to pre-load local WebGPU model:", error);
+        } finally {
+          setIsAiLoading(false);
         }
       }
     }
-  }, [flagHtml, activeState, countryCode]);
+    preinitAI();
+  }, [activeState, engine, isAiLoading]);
+
+  const fetchFallbackFact = async (name) => {
+    try {
+      const queryName = name === "your local region" ? "India" : name;
+      const factsRes = await fetch(`/api/facts?country=${encodeURIComponent(queryName)}&t=${Date.now()}`);
+      if (factsRes.ok) {
+        const factsData = await factsRes.json();
+        if (factsData.fact) {
+          setFactText(factsData.fact);
+        } else {
+          setFactText("Fascinating region with a rich history and culture!");
+        }
+        if (factsData.source) {
+          setFactSource(factsData.source);
+        } else {
+          setFactSource("Wikipedia Fallback");
+        }
+      } else {
+        setFactText("Unique culture and rich history waiting to be explored!");
+        setFactSource("Static Fallback");
+      }
+    } catch (err) {
+      console.error(err);
+      setFactText("Unique culture and rich history waiting to be explored!");
+      setFactSource("Static Fallback");
+    } finally {
+      setFactLoading(false);
+    }
+  };
 
   // Fetch facts dynamically when countryName or bubble status changes
   const fetchCountryFacts = async (name) => {
@@ -60,29 +95,48 @@ export default function Home() {
     setFactLoading(true);
     setFactText("");
     setFactStats(null);
+    setFactSource(""); const queryName = name === "your local region" ? "India" : name;
 
+    // 1. Fetch stats in parallel from the server-side REST API
     try {
-      const queryName = name === "your local region" ? "India" : name;
-      // Add a timestamp cache-buster to ensure we run a fresh search on each click
       const factsRes = await fetch(`/api/facts?country=${encodeURIComponent(queryName)}&t=${Date.now()}`);
       if (factsRes.ok) {
         const factsData = await factsRes.json();
-        if (factsData.fact) {
-          setFactText(factsData.fact);
-        } else {
-          setFactText("Failed to retrieve a new fact. Please click again to query the web!");
-        }
         if (factsData.stats) {
           setFactStats(factsData.stats);
         }
-      } else {
-        setFactText("No facts could be found for this location. Click again to query the web.");
       }
-    } catch (apiErr) {
-      console.warn("Dynamic facts API failed", apiErr);
-      setFactText("Failed to query the web. Click again to retry.");
-    } finally {
-      setFactLoading(false);
+    } catch (statsErr) {
+      console.warn("Rest Countries API stats fetch failed:", statsErr);
+    }
+
+    // 2. If local LLM engine is loaded, stream AI fact generation
+    if (engine) {
+      setFactSource(DEFAULT_LLM_MODEL);
+      try {
+        const template = process.env.NEXT_PUBLIC_LLM_PROMPT_TEMPLATE || "Share one mind-blowing historical fact about {country}! Just one line with minium 7 words and maximum 15 words.";
+        const prompt = template.replace("{country}", queryName);
+
+        const chunks = await engine.chat.completions.create({
+          messages: [{ role: "user", content: prompt }],
+          stream: true,
+        });
+
+        let streamedText = "";
+        for await (const chunk of chunks) {
+          const token = chunk.choices[0]?.delta?.content || "";
+          streamedText += token;
+          setFactText(streamedText);
+        }
+      } catch (llmErr) {
+        console.error("Local LLM generation failed, falling back...", llmErr);
+        await fetchFallbackFact(name);
+      } finally {
+        setFactLoading(false);
+      }
+    } else {
+      // Fallback to Wikipedia summary if engine is not loaded
+      await fetchFallbackFact(name);
     }
   };
 
@@ -111,7 +165,7 @@ export default function Home() {
     setCountryName(name);
 
     if (SUPPORTED_COUNTRIES.includes(code)) {
-      setStatusText("Welcome to Flag Explorer!");
+      setStatusText("Welcome to Fun facts about!");
       const success = await loadFlagTemplate(code);
       if (success) {
         setActiveState("flag-presenter");
@@ -202,7 +256,7 @@ export default function Home() {
       const minTopVal = height * 0.4;
       const maxTopVal = height * 0.75 - 50;
       const randomTop = minTopVal + Math.random() * (maxTopVal - minTopVal);
-      
+
       setBubbleStyle({
         position: 'fixed',
         left: `${Math.max(10, randomLeft)}px`,
@@ -214,15 +268,17 @@ export default function Home() {
   };
 
   const handleAnimationEnd = (e) => {
-    if (e.animationName === "bubble-float-up") {
-      setIsBubbleOpen(false);
-    }
+    // Let bubble stay visible indefinitely on animation end
   };
 
-  const toggleFactsBubble = () => {
+  const toggleFactsBubble = async () => {
+    if (factLoading) return;
+    if (isBubbleOpen) {
+      setIsBubbleOpen(false);
+    }
+    await fetchCountryFacts(countryName);
     randomizeBubblePosition();
     setIsBubbleOpen(true);
-    fetchCountryFacts(countryName);
   };
 
   return (
@@ -258,9 +314,13 @@ export default function Home() {
         factLoading={factLoading}
         factText={factText}
         factStats={factStats}
+        factSource={factSource}
         bubbleStyle={bubbleStyle}
         toggleFactsBubble={toggleFactsBubble}
         handleAnimationEnd={handleAnimationEnd}
+        isAiReady={!!engine}
+        isAiLoading={isAiLoading}
+        aiProgress={aiProgress}
       />
 
       <PrModal
@@ -268,6 +328,11 @@ export default function Home() {
         onClose={() => setIsPrModalOpen(false)}
         countryCode={countryCode}
         countryName={countryName}
+      />
+
+      <ModelStatus
+        isAiReady={!!engine}
+        modelLabel={DEFAULT_LLM_MODEL}
       />
     </>
   );

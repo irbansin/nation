@@ -14,7 +14,7 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata = {
-  title: "Where am I? - Flag Explorer",
+  title: "Where am I? - Fun Facts",
   description: "Detects your country based on IP and shows its flag",
 };
 

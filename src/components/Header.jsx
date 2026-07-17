@@ -3,7 +3,7 @@ import { SUPPORTED_COUNTRIES } from "../app/constants";
 export default function Header({ statusText, manualSelection, onManualSelection }) {
   return (
     <header className="app-header">
-      <h1 className="app-title">Flag Explorer</h1>
+      <h1 className="app-title">Fun Facts about</h1>
       <p className="app-subtitle" id="status-text">{statusText}</p>
 
       {/* Selector navigation */}

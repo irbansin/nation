@@ -1,4 +1,30 @@
+import { useEffect } from "react";
+
 export default function FlagCard({ activeState, flagHtml, countryName, countryCode, onOpenPr }) {
+  useEffect(() => {
+    if (activeState === "flag-presenter" && countryCode === "US") {
+      const canton = document.getElementById("usa-canton");
+      if (canton && canton.children.length === 0) {
+        canton.innerHTML = "";
+        for (let r = 0; r < 9; r++) {
+          const isEvenRow = r % 2 === 0;
+          const starCount = isEvenRow ? 6 : 5;
+          const rowDiv = document.createElement("div");
+          rowDiv.className = "star-row" + (isEvenRow ? '' : ' five-stars');
+
+          for (let s = 0; s < starCount; s++) {
+            rowDiv.innerHTML += `
+              <svg class="star-svg" viewBox="0 0 24 24">
+                <path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.4 8.168L12 18.896l-7.334 3.857 1.4-8.168L.132 9.21l8.2-1.192z"/>
+              </svg>
+            `;
+          }
+          canton.appendChild(rowDiv);
+        }
+      }
+    }
+  });
+
   return (
     <div className="card-glass" id="main-card">
       {/* Loading */}
