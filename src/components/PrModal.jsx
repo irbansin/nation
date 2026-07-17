@@ -7,7 +7,7 @@ export default function PrModal({ isOpen, onClose, countryCode, countryName }) {
         </button>
         <h3 className="modal-title">How to Contribute</h3>
         <ol className="contribution-steps">
-          <li>Fork this repository on GitHub.</li>
+          <li>Fork the repository on GitHub at <a href="https://github.com/irbansin/nation" target="_blank" rel="noopener noreferrer">github.com/irbansin/nation</a>.</li>
           <li>
             Create a new file: <code>public/flags/{countryCode}.html</code> and design your flag layout inside it.
           </li>

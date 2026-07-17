@@ -615,6 +615,10 @@ body {
   color: var(--text-secondary);
 }
 
+.contribution-steps a {
+  color: white;
+}
+
 .contribution-steps code {
   background: rgba(255, 255, 255, 0.05);
   padding: 0.15rem 0.4rem;
@@ -882,6 +886,7 @@ body {
     opacity: 0;
     transform: translateY(40px) scale(0.9);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -1120,10 +1125,13 @@ body {
 }
 
 @keyframes pulse-fab {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
   }
+
   50% {
     opacity: 0.85;
     transform: scale(0.96);
@@ -1135,4 +1143,40 @@ body {
   font-weight: 600;
   color: white;
   white-space: nowrap;
+}
+
+/* --- Contribute Button Styles --- */
+
+.contribute-btn {
+  position: fixed;
+  top: 2rem;
+  right: 2rem;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.contribute-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(129, 140, 248, 0.3);
+}
+
+.contribute-btn .git-icon {
+  color: #818cf8;
 }

@@ -8,6 +8,7 @@ import FlagCard from "../components/FlagCard";
 import FactsBubble from "../components/FactsBubble";
 import PrModal from "../components/PrModal";
 import ModelStatus from "../components/ModelStatus";
+import ContributeButton from "../components/ContributeButton";
 
 export default function Home() {
   const [statusText, setStatusText] = useState("Detecting your location...");
@@ -333,6 +334,10 @@ export default function Home() {
       <ModelStatus
         isAiReady={!!engine}
         modelLabel={DEFAULT_LLM_MODEL}
+      />
+
+      <ContributeButton
+        onOpenPr={() => setIsPrModalOpen(true)}
       />
     </>
   );

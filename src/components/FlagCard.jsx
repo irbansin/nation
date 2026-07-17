@@ -59,7 +59,7 @@ export default function FlagCard({ activeState, flagHtml, countryName, countryCo
           <div className="pr-box">
             <h3 className="pr-box-title">Help us support your country!</h3>
             <p className="pr-box-desc">
-              Add code to render your flag. It's open-source and easy to contribute.
+              Add code to render your flag. It's open-source at <a href="https://github.com/irbansin/nation" target="_blank" rel="noopener noreferrer" style={{ color: '#818cf8', textDecoration: 'underline' }}>github.com/irbansin/nation</a> and easy to contribute.
             </p>
             <div className="code-snippet-container">
               <pre>
