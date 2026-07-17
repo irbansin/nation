@@ -26,6 +26,8 @@ export default function Header({ statusText, manualSelection, onManualSelection 
             {code === "NL" && "🇳🇱 Netherlands"}
             {code === "UA" && "🇺🇦 Ukraine"}
             {code === "YE" && "🇾🇪 Yemen"}
+            {code === "CN" && "🇨🇳 China"}
+            {code === "RU" && "🇷🇺 Russia"}
           </button>
         ))}
         <button

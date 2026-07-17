@@ -1,7 +1,7 @@
 export const DEFAULT_LLM_MODEL = "Qwen2.5-0.5B-Instruct-q4f16_1-MLC";
 export const DEFAULT_LLM_SIZE = "180MB";
 
-export const SUPPORTED_COUNTRIES = ['IN', 'US', 'FR', 'DE', 'JP', 'IT', 'BE', 'IE', 'AT', 'NL', 'UA', 'YE'];
+export const SUPPORTED_COUNTRIES = ['IN', 'US', 'FR', 'DE', 'JP', 'IT', 'BE', 'IE', 'AT', 'NL', 'UA', 'YE', 'CN', 'RU'];
 
 export const MOCK_COUNTRY_NAMES = {
   'IN': 'India',
@@ -16,6 +16,8 @@ export const MOCK_COUNTRY_NAMES = {
   'NL': 'Netherlands',
   'UA': 'Ukraine',
   'YE': 'Yemen',
-  'GB': 'United Kingdom'
+  'GB': 'United Kingdom',
+  'CN': 'China',
+  'RU': 'Russia'
 };
 

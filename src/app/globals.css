@@ -757,6 +757,19 @@ body {
   background-color: #000000;
 }
 
+/* Russia Flag */
+.russian-flag .stripe.white {
+  background-color: #ffffff;
+}
+
+.russian-flag .stripe.blue {
+  background-color: #0039a6;
+}
+
+.russian-flag .stripe.red {
+  background-color: #d52b1e;
+}
+
 /* Japan Flag */
 .flag-japan {
   width: 100%;
